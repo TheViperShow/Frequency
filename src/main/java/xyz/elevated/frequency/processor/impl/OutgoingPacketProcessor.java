@@ -3,9 +3,10 @@ package xyz.elevated.frequency.processor.impl;
 import net.minecraft.server.v1_8_R3.*;
 import xyz.elevated.frequency.data.PlayerData;
 import xyz.elevated.frequency.processor.type.Processor;
-import xyz.elevated.frequency.wrapper.impl.server.WrappedOutKeepAlive;
+import xyz.elevated.frequency.wrapper.impl.server.WrappedPlayOutKeepAlive;
 import xyz.elevated.frequency.wrapper.impl.server.WrappedPlayOutEntityVelocity;
 import xyz.elevated.frequency.wrapper.impl.server.WrappedPlayOutTeleport;
+import xyz.elevated.frequency.wrapper.impl.server.WrappedPlayOutTransaction;
 
 public final class OutgoingPacketProcessor implements Processor<Packet<PacketListenerPlayOut>> {
 
@@ -35,10 +36,6 @@ public final class OutgoingPacketProcessor implements Processor<Packet<PacketLis
             }
         } else if (packet instanceof PacketPlayOutPosition) {
             playerData.getActionManager().onTeleport();
-        } else if(packet instanceof PacketPlayOutKeepAlive) {
-            final WrappedOutKeepAlive wrapper = new WrappedOutKeepAlive(packet);
-
-            playerData.getKeepAliveUpdates().put(wrapper.getTime(), System.currentTimeMillis());
         }
     }
 }

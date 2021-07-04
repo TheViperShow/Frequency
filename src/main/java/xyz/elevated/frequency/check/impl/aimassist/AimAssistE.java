@@ -1,17 +1,20 @@
 package xyz.elevated.frequency.check.impl.aimassist;
 
-import com.google.common.collect.Maps;
-import org.bukkit.Bukkit;
 import xyz.elevated.frequency.check.CheckData;
 import xyz.elevated.frequency.check.type.RotationCheck;
 import xyz.elevated.frequency.data.PlayerData;
 import xyz.elevated.frequency.update.RotationUpdate;
 import xyz.elevated.frequency.util.MathUtil;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @CheckData(name = "AimAssist (E)")
 public final class AimAssistE extends RotationCheck {
     private float lastDeltaYaw = 0.0f, lastDeltaPitch = 0.0f;
     private int buffer = 0;
+
+    private static final double MODULO_THRESHOLD = 90F;
+    private static final double LINEAR_THRESHOLD = 0.1F;
 
     public AimAssistE(final PlayerData playerData) {
         super(playerData);
@@ -19,6 +22,8 @@ public final class AimAssistE extends RotationCheck {
 
     @Override
     public void process(final RotationUpdate rotationUpdate) {
+        final int now = playerData.getTicks().get();
+
         // Get the deltas from the rotation update
         final float deltaYaw = rotationUpdate.getDeltaYaw();
         final float deltaPitch = rotationUpdate.getDeltaPitch();
@@ -39,25 +44,27 @@ public final class AimAssistE extends RotationCheck {
         final double previousX = lastDeltaYaw / constantYaw;
         final double previousY = lastDeltaPitch / constantPitch;
 
+        // Make sure the player is attacking or placing to filter out the check
+        final boolean action = now - playerData.getActionManager().getLastAttack() < 3
+                || now - playerData.getActionManager().getLastPlace() < 3;
+
         // Make sure the rotation is not very large and not equal to zero and get the modulo of the xys
-        if (deltaYaw > 0.0 && deltaPitch > 0.0 && deltaYaw < 20.f && deltaPitch < 20.f) {
+        if (deltaYaw > 0.0 && deltaPitch > 0.0 && deltaYaw < 20.f && deltaPitch < 20.f && action) {
             final double moduloX = currentX % previousX;
             final double moduloY = currentY % previousY;
 
-            // Get the floor delta of the the moduloes
+            // Get the floor delta of the the modulos
             final double floorModuloX = Math.abs(Math.floor(moduloX) - moduloX);
             final double floorModuloY = Math.abs(Math.floor(moduloY) - moduloY);
 
             // Impossible to have a different constant in two rotations
-            final boolean invalidX = moduloX > 90.d && floorModuloX > 0.1;
-            final boolean invalidY = moduloY > 90.d && floorModuloY > 0.1;
+            final boolean invalidX = moduloX > MODULO_THRESHOLD && floorModuloX > LINEAR_THRESHOLD;
+            final boolean invalidY = moduloY > MODULO_THRESHOLD && floorModuloY > LINEAR_THRESHOLD;
 
-            if (invalidX || invalidY) {
+            if (invalidX && invalidY) {
                 buffer = Math.min(buffer + 1, 200);
 
-                if (buffer > 10) {
-                    fail();
-                }
+                if (buffer > 6) fail();
             } else {
                 buffer = 0;
             }

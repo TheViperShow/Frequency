@@ -4,16 +4,12 @@ import net.minecraft.server.v1_8_R3.Packet;
 import net.minecraft.server.v1_8_R3.PacketPlayInKeepAlive;
 import xyz.elevated.frequency.wrapper.PacketWrapper;
 
-public class WrappedPlayInKeepAlive extends PacketWrapper {
+public final class WrappedPlayInKeepAlive extends PacketWrapper {
     public WrappedPlayInKeepAlive(Packet<?> instance) {
         super(instance, PacketPlayInKeepAlive.class);
     }
 
-    public int getTime() {
+    public int getId() {
         return get("a");
-    }
-
-    public void setTime(int time) {
-        set("a", time);
     }
 }

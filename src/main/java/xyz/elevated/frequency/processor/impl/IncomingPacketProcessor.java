@@ -1,6 +1,7 @@
 package xyz.elevated.frequency.processor.impl;
 
 import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import xyz.elevated.frequency.check.type.PacketCheck;
 import xyz.elevated.frequency.data.BoundingBox;
@@ -10,6 +11,8 @@ import xyz.elevated.frequency.data.impl.RotationManager;
 import xyz.elevated.frequency.processor.type.Processor;
 import xyz.elevated.frequency.util.NmsUtil;
 import xyz.elevated.frequency.wrapper.impl.client.*;
+
+import java.util.Random;
 
 public final class IncomingPacketProcessor implements Processor<Packet<PacketListenerPlayIn>> {
 
@@ -31,8 +34,9 @@ public final class IncomingPacketProcessor implements Processor<Packet<PacketLis
 
             if (hasPos) {
                 final PositionManager positionManager = playerData.getPositionManager();
+                final World world = playerData.getBukkitPlayer().getWorld();
 
-                positionManager.handle(posX, posY, posZ, onGround);
+                positionManager.handle(world, posX, posY, posZ, onGround);
             }
 
             if (hasLook) {
@@ -114,12 +118,7 @@ public final class IncomingPacketProcessor implements Processor<Packet<PacketLis
         } else if(packet instanceof PacketPlayInKeepAlive) {
             final WrappedPlayInKeepAlive wrapper = new WrappedPlayInKeepAlive(packet);
 
-            long now = System.currentTimeMillis();
-            playerData.getKeepAliveUpdates().computeIfPresent(wrapper.getTime(), (id, time) -> {
-                playerData.getPing().set(now - time);
-                playerData.getKeepAliveUpdates().remove(id);
-                return time;
-            });
+            playerData.getConnectionManager().onKeepAlive(wrapper.getId(), System.currentTimeMillis());
             playerData.getCheckManager().getChecks().stream().filter(PacketCheck.class::isInstance).forEach(check -> check.process(wrapper));
         } else if (packet instanceof PacketPlayInClientCommand) {
             final WrappedPlayInClientCommand wrapper = new WrappedPlayInClientCommand(packet);
@@ -130,6 +129,7 @@ public final class IncomingPacketProcessor implements Processor<Packet<PacketLis
         } else if (packet instanceof PacketPlayInBlockPlace) {
             final WrappedPlayInBlockPlace wrapper =  new WrappedPlayInBlockPlace(packet);
 
+            playerData.getActionManager().onPlace();
             playerData.getCheckManager().getChecks().stream()
                     .filter(PacketCheck.class::isInstance)
                     .forEach(check -> check.process(wrapper));
@@ -137,6 +137,15 @@ public final class IncomingPacketProcessor implements Processor<Packet<PacketLis
             final WrappedPlayInSteerVehicle wrapper = new WrappedPlayInSteerVehicle(packet);
 
             playerData.getActionManager().onSteerVehicle();
+            playerData.getCheckManager().getChecks().stream()
+                    .filter(PacketCheck.class::isInstance)
+                    .forEach(check -> check.process(wrapper));
+        } else if (packet instanceof PacketPlayInTransaction) {
+            final WrappedPlayInTransaction wrapper = new WrappedPlayInTransaction(packet);
+
+            final long now = System.currentTimeMillis();
+
+            playerData.getConnectionManager().onTransaction(wrapper.getHash(), now);
             playerData.getCheckManager().getChecks().stream()
                     .filter(PacketCheck.class::isInstance)
                     .forEach(check -> check.process(wrapper));

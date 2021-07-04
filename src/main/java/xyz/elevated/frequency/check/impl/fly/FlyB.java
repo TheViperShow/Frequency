@@ -23,25 +23,22 @@ public final class FlyB extends PositionCheck {
         final Location to = positionUpdate.getTo();
 
         final double deltaY = to.getY() - from.getY();
-        final double estimation = (lastDeltaY * 0.9800000190734863) - 0.08;
+        final double estimation = (lastDeltaY - 0.08) * 0.9800000190734863;
 
         final boolean resetting = Math.abs(deltaY) + 0.0980000019 < 0.05;
         final boolean exempt = this.isExempt(ExemptType.TELEPORTING, ExemptType.VELOCITY);
 
         final boolean touchingAir = playerData.getPositionManager().getTouchingAir().get();
 
-        if (exempt || resetting) {
-            return;
-        }
+        if (exempt || resetting) return;
 
         if (touchingAir) {
             ++ticks;
 
-            if (ticks > 5 && Math.abs(estimation - deltaY) > 0.002) {
+            if (ticks > 5 && Math.abs(estimation - deltaY) > 0.01) {
                 buffer += 1.5;
 
-                if (buffer > 5)
-                    fail();
+                if (buffer > 5) fail();
             } else {
                 buffer = Math.max(0, buffer - 1.25);
             }

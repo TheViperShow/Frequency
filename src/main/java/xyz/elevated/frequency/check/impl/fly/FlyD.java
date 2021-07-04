@@ -9,7 +9,6 @@ import xyz.elevated.frequency.exempt.type.ExemptType;
 import xyz.elevated.frequency.update.PositionUpdate;
 import xyz.elevated.frequency.util.MathUtil;
 
-
 @CheckData(name = "Fly (D)")
 public final class FlyD extends PositionCheck {
 
@@ -31,7 +30,7 @@ public final class FlyD extends PositionCheck {
 
         final int modifierJump = MathUtil.getPotionLevel(playerData.getBukkitPlayer(), PotionEffectType.JUMP);
 
-        final double offset = Math.hypot(deltaX, deltaZ);
+        final double offset = MathUtil.magnitude(deltaX, deltaZ);
         final double threshold = modifierJump > 0 ? 1.55220341408 + (Math.pow(modifierJump + 4.2, 2D) / 16D) : 1.25220341408;
 
         final boolean exempt = this.isExempt(ExemptType.TELEPORTING, ExemptType.VELOCITY);
@@ -56,6 +55,8 @@ public final class FlyD extends PositionCheck {
                 total = 0.0;
                 buffer = 0.0;
             }
+        } else {
+            ticks = 0;
         }
     }
 }

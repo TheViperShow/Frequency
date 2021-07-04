@@ -3,13 +3,13 @@ package xyz.elevated.frequency.check.impl.badpackets;
 import xyz.elevated.frequency.check.CheckData;
 import xyz.elevated.frequency.check.type.PostCheck;
 import xyz.elevated.frequency.data.PlayerData;
-import xyz.elevated.frequency.wrapper.impl.client.WrappedPlayInArmAnimation;
+import xyz.elevated.frequency.wrapper.impl.client.WrappedPlayInWindowClick;
 
-@CheckData(name = "BadPackets (B)")
-public final class BadPacketsB extends PostCheck {
+@CheckData(name = "BadPackets (M)")
+public final class BadPacketsM extends PostCheck {
 
-    public BadPacketsB(final PlayerData playerData) {
-        super(playerData, WrappedPlayInArmAnimation.class);
+    public BadPacketsM(final PlayerData playerData) {
+        super(playerData, WrappedPlayInWindowClick.class);
     }
 
     @Override

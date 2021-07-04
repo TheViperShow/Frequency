@@ -15,8 +15,7 @@ import xyz.elevated.frequency.wrapper.impl.client.WrappedPlayInUseEntity;
 
 @CheckData(name = "Hitbox (A)")
 public final class HitboxA extends PacketCheck {
-
-    private double buffer = 0.0d;
+    private double buffer = 0.0;
 
     public HitboxA(final PlayerData playerData) {
         super(playerData);
@@ -35,21 +34,22 @@ public final class HitboxA extends PacketCheck {
             if (wrapper.getAction() != PacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                     || playerData.getBukkitPlayer().getGameMode() == GameMode.CREATIVE) return;
 
-            final int now = Frequency.INSTANCE.getTickProcessor().getTicks();
-            final int ping = MathUtil.getPingInTicks(playerData.getPing().get()) + 3;
+            final int now = Frequency.INSTANCE.getTickManager().getTicks();
+            final int ping = MathUtil.getPingInTicks(playerData.getKeepAlivePing().get()) + 3;
 
             final Vector origin = playerData.getPositionUpdate().get().getTo().toVector();
 
             final double distance = playerData.getTargetLocations().stream()
                     .filter(pair -> Math.abs(now - pair.getY() - ping) < 2)
                     .mapToDouble(pair -> {
-                        AxisAlignedBB aabb = pair.getX();
+                        final AxisAlignedBB box = pair.getX();
 
-                        double widthX = Math.abs(aabb.a - aabb.d) / 2, widthZ = Math.abs(aabb.c - aabb.f) / 2;
+                        final double widthX = Math.abs(box.a - box.d) / 2;
+                        final double widthZ = Math.abs(box.c - box.f) / 2;
 
-                        Vector loc = new Vector(aabb.a + widthX, 0, aabb.c + widthZ);
+                        final Vector loc = new Vector(box.a + widthX, 0, box.c + widthZ);
 
-                        return origin.setY(0).distance(loc) - Math.hypot(widthX, widthZ) - .1f;
+                        return origin.setY(0).distance(loc) - MathUtil.magnitude(widthX, widthZ) - .1f;
                     }).min().orElse(-1);
 
             if (distance > 3) {
